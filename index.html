@@ -32,12 +32,21 @@
           <button @click="tab = 'categories'" :class="tab === 'categories' ? 'bg-red-600 text-white' : 'text-gray-400 hover:bg-gray-800'" class="w-full text-left p-3 rounded-xl flex items-center gap-2">
             <i class="fa-solid fa-folder"></i> Category Manager
           </button>
+          <button @click="tab = 'menu'" :class="tab === 'menu' ? 'bg-red-600 text-white' : 'text-gray-400 hover:bg-gray-800'" class="w-full text-left p-3 rounded-xl flex items-center gap-2">
+            <i class="fa-solid fa-bars"></i> Main Menu Links
+          </button>
           <button @click="tab = 'payments'" :class="tab === 'payments' ? 'bg-red-600 text-white' : 'text-gray-400 hover:bg-gray-800'" class="w-full text-left p-3 rounded-xl flex items-center justify-between">
             <span class="flex items-center gap-2"><i class="fa-solid fa-crown text-yellow-400"></i> VIP Approvals</span>
             <span x-show="pendingPayments.length > 0" class="bg-yellow-500 text-black px-1.5 py-0.5 rounded-full text-[10px]" x-text="pendingPayments.length"></span>
           </button>
+          <button @click="tab = 'pricing'" :class="tab === 'pricing' ? 'bg-red-600 text-white' : 'text-gray-400 hover:bg-gray-800'" class="w-full text-left p-3 rounded-xl flex items-center gap-2">
+            <i class="fa-solid fa-tags"></i> VIP Package Pricing
+          </button>
           <button @click="tab = 'ads'" :class="tab === 'ads' ? 'bg-red-600 text-white' : 'text-gray-400 hover:bg-gray-800'" class="w-full text-left p-3 rounded-xl flex items-center gap-2">
-            <i class="fa-solid fa-rectangle-ad"></i> SmartLink Ads Setup
+            <i class="fa-solid fa-rectangle-ad"></i> Ads & Banners
+          </button>
+          <button @click="tab = 'scripts'" :class="tab === 'scripts' ? 'bg-red-600 text-white' : 'text-gray-400 hover:bg-gray-800'" class="w-full text-left p-3 rounded-xl flex items-center gap-2">
+            <i class="fa-solid fa-code"></i> Custom JS Injector
           </button>
         </nav>
       </div>
@@ -50,24 +59,39 @@
     <!-- Main Workspace -->
     <main class="flex-1 overflow-y-auto p-6 bg-black">
 
-      <!-- Tab 1: Stats -->
+      <!-- Tab 1: Stats & Analytics -->
       <div x-show="tab === 'stats'" class="space-y-6">
         <h2 class="text-lg font-bold text-gray-200">System Overview & Analytics</h2>
-        <div class="grid grid-cols-4 gap-4">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div class="bg-gray-900 border border-gray-800 p-4 rounded-2xl">
             <span class="text-xs text-gray-400 font-bold block">Total Uploads</span>
             <span class="text-2xl font-black text-white" x-text="posts.length"></span>
           </div>
           <div class="bg-gray-900 border border-gray-800 p-4 rounded-2xl">
-            <span class="text-xs text-gray-400 font-bold block">Categories</span>
-            <span class="text-2xl font-black text-white" x-text="categories.length"></span>
+            <span class="text-xs text-gray-400 font-bold block">Total Users</span>
+            <span class="text-2xl font-black text-blue-400" x-text="totalUsersCount"></span>
+          </div>
+          <div class="bg-gray-900 border border-gray-800 p-4 rounded-2xl">
+            <span class="text-xs text-gray-400 font-bold block">VIP Members</span>
+            <span class="text-2xl font-black text-yellow-400" x-text="vipUsersCount"></span>
           </div>
           <div class="bg-gray-900 border border-gray-800 p-4 rounded-2xl">
             <span class="text-xs text-gray-400 font-bold block">Pending VIP Requests</span>
-            <span class="text-2xl font-black text-yellow-400" x-text="pendingPayments.length"></span>
+            <span class="text-2xl font-black text-amber-500" x-text="pendingPayments.length"></span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-4">
+          <div class="bg-gray-900 border border-gray-800 p-4 rounded-2xl">
+            <span class="text-xs text-gray-400 font-bold block">Yesterday Views</span>
+            <span class="text-2xl font-black text-pink-400" x-text="yesterdayViews"></span>
           </div>
           <div class="bg-gray-900 border border-gray-800 p-4 rounded-2xl">
-            <span class="text-xs text-gray-400 font-bold block">Total Stream Views</span>
+            <span class="text-xs text-gray-400 font-bold block">This Month Views</span>
+            <span class="text-2xl font-black text-indigo-400" x-text="monthViews"></span>
+          </div>
+          <div class="bg-gray-900 border border-gray-800 p-4 rounded-2xl">
+            <span class="text-xs text-gray-400 font-bold block">All Time Stream Views</span>
             <span class="text-2xl font-black text-emerald-400" x-text="getTotalViews()"></span>
           </div>
         </div>
@@ -75,7 +99,7 @@
 
       <!-- Tab 2: Upload Media -->
       <div x-show="tab === 'upload'" class="max-w-2xl space-y-4">
-        <h2 class="text-lg font-bold text-gray-200">Publish New Video Post</h2>
+        <h2 class="text-lg font-bold text-gray-200">Publish / Edit Video Post</h2>
         <div class="space-y-3 text-xs">
           <input type="text" x-model="post.title" placeholder="Video Title" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-white">
           <input type="text" x-model="post.thumbnail" placeholder="Thumbnail Image URL" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-white">
@@ -94,11 +118,11 @@
             <label for="premCheck" class="font-bold text-yellow-400">Lock as Premium Content (VIP Only)</label>
           </div>
 
-          <button @click="savePost()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl">Publish Post Now</button>
+          <button @click="savePost()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl" x-text="editingPostId ? 'Update Post Now' : 'Publish Post Now'"></button>
         </div>
       </div>
 
-      <!-- Tab 3: Posts List -->
+      <!-- Tab 3: Posts List & Edit -->
       <div x-show="tab === 'posts'" class="space-y-4">
         <h2 class="text-lg font-bold text-gray-200">All Published Media</h2>
         <div class="space-y-2">
@@ -111,7 +135,10 @@
                   <span class="text-[10px] text-gray-400" x-text="p.category"></span>
                 </div>
               </div>
-              <button @click="deletePost(p.id)" class="bg-red-950 text-red-400 p-2 rounded-lg font-bold"><i class="fa-solid fa-trash"></i></button>
+              <div class="flex items-center gap-2">
+                <button @click="editPost(p)" class="bg-blue-950 text-blue-400 p-2 rounded-lg font-bold"><i class="fa-solid fa-pen"></i> Edit</button>
+                <button @click="deletePost(p.id)" class="bg-red-950 text-red-400 p-2 rounded-lg font-bold"><i class="fa-solid fa-trash"></i></button>
+              </div>
             </div>
           </template>
         </div>
@@ -134,7 +161,28 @@
         </div>
       </div>
 
-      <!-- Tab 5: Payments Approval -->
+      <!-- Tab 5: Dynamic Menu Manager -->
+      <div x-show="tab === 'menu'" class="max-w-lg space-y-4">
+        <h2 class="text-lg font-bold text-gray-200">Manage Main Navigation Links</h2>
+        <div class="space-y-2 text-xs">
+          <input type="text" x-model="newMenuTitle" placeholder="Link Title (e.g. Telegram Channel)" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2.5 text-white">
+          <input type="text" x-model="newMenuUrl" placeholder="Link URL" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2.5 text-white">
+          <button @click="addMenuLink()" class="w-full bg-red-600 text-white py-2 rounded-xl font-bold">Add Link to Drawer</button>
+        </div>
+        <div class="space-y-2">
+          <template x-for="m in customMenuLinks" :key="m.id">
+            <div class="bg-gray-900 p-2.5 rounded-xl border border-gray-800 flex justify-between items-center text-xs">
+              <div>
+                <div class="font-bold text-white" x-text="m.title"></div>
+                <div class="text-[10px] text-gray-400" x-text="m.url"></div>
+              </div>
+              <button @click="deleteMenuLink(m.id)" class="text-red-500 font-bold">&times;</button>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- Tab 6: Payments Approval -->
       <div x-show="tab === 'payments'" class="space-y-4">
         <h2 class="text-lg font-bold text-yellow-400">VIP Order Approvals</h2>
         <div class="space-y-2">
@@ -151,14 +199,54 @@
         </div>
       </div>
 
-      <!-- Tab 6: SmartLink Ads -->
-      <div x-show="tab === 'ads'" class="max-w-md space-y-4">
-        <h2 class="text-lg font-bold text-gray-200">3-Step SmartLink Ad Manager</h2>
+      <!-- Tab 7: VIP Package Pricing -->
+      <div x-show="tab === 'pricing'" class="max-w-md space-y-4">
+        <h2 class="text-lg font-bold text-yellow-400">VIP Pricing & Payment Numbers</h2>
         <div class="space-y-3 text-xs">
-          <input type="text" x-model="ads.link1" placeholder="Ad Link 1 URL" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-white">
-          <input type="text" x-model="ads.link2" placeholder="Ad Link 2 URL" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-white">
-          <input type="text" x-model="ads.link3" placeholder="Ad Link 3 URL" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-white">
-          <button @click="saveAds()" class="w-full bg-red-600 text-white font-bold py-3 rounded-xl">Save SmartLinks</button>
+          <p class="font-bold text-gray-400">Payment Gateway Numbers:</p>
+          <input type="text" x-model="paymentNumbers.bkash" placeholder="bKash Number" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2.5 text-white">
+          <input type="text" x-model="paymentNumbers.nagad" placeholder="Nagad Number" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2.5 text-white">
+          <input type="text" x-model="paymentNumbers.rocket" placeholder="Rocket Number" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2.5 text-white">
+          
+          <p class="font-bold text-gray-400 mt-4">Package Prices (BDT):</p>
+          <template x-for="p in vipPackages" :key="p.name">
+            <div class="flex items-center gap-2">
+              <span class="w-28 text-gray-300" x-text="p.name"></span>
+              <input type="number" x-model.number="p.price" class="bg-gray-900 border border-gray-800 rounded-xl p-2 text-white flex-1">
+            </div>
+          </template>
+
+          <button @click="savePricingSettings()" class="w-full bg-amber-600 text-white font-bold py-3 rounded-xl mt-4">Save Pricing & Numbers</button>
+        </div>
+      </div>
+
+      <!-- Tab 8: SmartLink Ads & Native Ads Manager -->
+      <div x-show="tab === 'ads'" class="max-w-md space-y-4">
+        <h2 class="text-lg font-bold text-gray-200">Ads Manager</h2>
+        <div class="space-y-3 text-xs">
+          <p class="font-bold text-yellow-400">Top Banner Ad HTML (720x90):</p>
+          <textarea x-model="ads.topBanner" placeholder="720x90 Ad Code / Image HTML" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2 text-white h-20"></textarea>
+
+          <p class="font-bold text-yellow-400">3-Step Gateway Links:</p>
+          <input type="text" x-model="ads.link1" placeholder="Ad Link 1 URL" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2.5 text-white">
+          <input type="text" x-model="ads.link2" placeholder="Ad Link 2 URL" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2.5 text-white">
+          <input type="text" x-model="ads.link3" placeholder="Ad Link 3 URL" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2.5 text-white">
+
+          <p class="font-bold text-yellow-400">In-Feed Native Ad (Every 10 Posts):</p>
+          <input type="text" x-model="ads.feedAdTitle" placeholder="Ad Title" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2.5 text-white">
+          <input type="text" x-model="ads.feedAdImage" placeholder="Ad Cover Image URL" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2.5 text-white">
+          <input type="text" x-model="ads.feedAdUrl" placeholder="Ad Destination Link" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2.5 text-white">
+
+          <button @click="saveAds()" class="w-full bg-red-600 text-white font-bold py-3 rounded-xl">Save All Ads Settings</button>
+        </div>
+      </div>
+
+      <!-- Tab 9: Custom JS Script Injector -->
+      <div x-show="tab === 'scripts'" class="max-w-lg space-y-4">
+        <h2 class="text-lg font-bold text-gray-200">Custom JavaScript & Script Injector</h2>
+        <div class="space-y-3 text-xs">
+          <textarea x-model="scriptCode" placeholder="Enter JavaScript or HTML Code (e.g., Pop-Under Scripts, Analytics, Blogger Scripts)" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-white h-48 font-mono"></textarea>
+          <button @click="saveScripts()" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl">Inject Script to Main Site</button>
         </div>
       </div>
 
@@ -185,19 +273,38 @@
         posts: [],
         categories: [],
         pendingPayments: [],
+        customMenuLinks: [],
         newCat: '',
+        newMenuTitle: '', newMenuUrl: '',
         post: { title: '', thumbnail: '', iframeUrl: '', downloadUrl: '', category: '', isPremium: false },
-        ads: { link1: '', link2: '', link3: '' },
+        editingPostId: null,
+        totalUsersCount: 0,
+        vipUsersCount: 0,
+        yesterdayViews: 0,
+        monthViews: 0,
+        scriptCode: '',
+        vipPackages: [
+          { name: '1 Month VIP', price: 199, days: 30 },
+          { name: '3 Month VIP', price: 399, days: 90 },
+          { name: '6 Month VIP', price: 699, days: 180 },
+          { name: '1 Year VIP', price: 999, days: 365 }
+        ],
+        paymentNumbers: { bkash: '0190942xxxx', nagad: '0190942xxxx', rocket: '0190942xxxx' },
+        ads: { topBanner: '', link1: '', link2: '', link3: '', feedAdTitle: '', feedAdImage: '', feedAdUrl: '' },
 
         initAdmin() {
           this.loadPosts();
           this.loadCategories();
           this.loadPayments();
           this.loadAds();
+          this.loadCustomMenuLinks();
+          this.loadAnalyticsAndUsers();
+          this.loadPricing();
+          this.loadScripts();
         },
 
         loadPosts() {
-          db.collection("videos").onSnapshot(snap => {
+          db.collection("videos").orderBy("createdAt", "desc").onSnapshot(snap => {
             this.posts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
           });
         },
@@ -220,21 +327,73 @@
           });
         },
 
+        loadPricing() {
+          db.collection("settings").doc("packages").get().then(doc => {
+            if (doc.exists) {
+              this.vipPackages = doc.data().list || this.vipPackages;
+              this.paymentNumbers = doc.data().numbers || this.paymentNumbers;
+            }
+          });
+        },
+
+        loadScripts() {
+          db.collection("settings").doc("scripts").get().then(doc => {
+            if (doc.exists) this.scriptCode = doc.data().code || '';
+          });
+        },
+
+        loadCustomMenuLinks() {
+          db.collection("customMenu").onSnapshot(snap => {
+            this.customMenuLinks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          });
+        },
+
+        loadAnalyticsAndUsers() {
+          db.collection("users").onSnapshot(snap => {
+            this.totalUsersCount = snap.docs.length;
+            this.vipUsersCount = snap.docs.filter(d => d.data().isPremium).length;
+          });
+
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          const yKey = yesterday.toISOString().split('T')[0];
+
+          db.collection("dailyAnalytics").doc(yKey).get().then(doc => {
+            if (doc.exists) this.yesterdayViews = doc.data().views || 0;
+          });
+        },
+
         getTotalViews() {
           return this.posts.reduce((acc, p) => acc + (p.views || 0), 0);
         },
 
         savePost() {
           if(!this.post.title || !this.post.iframeUrl) return alert("Fill title and iframe URL!");
-          db.collection("videos").add({
-            ...this.post,
-            views: 0,
-            likes: 0,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          }).then(() => {
-            alert("Post Published!");
-            this.post = { title: '', thumbnail: '', iframeUrl: '', downloadUrl: '', category: '', isPremium: false };
-          });
+          
+          if (this.editingPostId) {
+            db.collection("videos").doc(this.editingPostId).update({ ...this.post }).then(() => {
+              alert("Post Updated!");
+              this.editingPostId = null;
+              this.post = { title: '', thumbnail: '', iframeUrl: '', downloadUrl: '', category: '', isPremium: false };
+              this.tab = 'posts';
+            });
+          } else {
+            db.collection("videos").add({
+              ...this.post,
+              views: 0,
+              likes: 0,
+              createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+              alert("Post Published!");
+              this.post = { title: '', thumbnail: '', iframeUrl: '', downloadUrl: '', category: '', isPremium: false };
+            });
+          }
+        },
+
+        editPost(p) {
+          this.editingPostId = p.id;
+          this.post = { title: p.title, thumbnail: p.thumbnail, iframeUrl: p.iframeUrl, downloadUrl: p.downloadUrl, category: p.category, isPremium: p.isPremium || false };
+          this.tab = 'upload';
         },
 
         deletePost(id) {
@@ -251,15 +410,44 @@
           db.collection("categories").doc(cat).delete();
         },
 
-        approvePayment(req) {
-          db.collection("users").doc(req.username).update({ isPremium: true }).then(() => {
-            db.collection("paymentRequests").doc(req.id).update({ status: "approved" });
-            alert(`User ${req.username} activated as VIP!`);
+        addMenuLink() {
+          if(!this.newMenuTitle || !this.newMenuUrl) return alert("Fill link fields!");
+          db.collection("customMenu").add({ title: this.newMenuTitle, url: this.newMenuUrl }).then(() => {
+            this.newMenuTitle = ''; this.newMenuUrl = '';
           });
         },
 
+        deleteMenuLink(id) {
+          db.collection("customMenu").doc(id).delete();
+        },
+
+        approvePayment(req) {
+          const days = req.days || 30;
+          const expiryDate = new Date();
+          expiryDate.setDate(expiryDate.getDate() + days);
+
+          db.collection("users").doc(req.username).update({ 
+            isPremium: true,
+            premiumUntil: expiryDate 
+          }).then(() => {
+            db.collection("paymentRequests").doc(req.id).update({ status: "approved" });
+            alert(`User ${req.username} activated as VIP for ${days} days!`);
+          });
+        },
+
+        savePricingSettings() {
+          db.collection("settings").doc("packages").set({
+            list: this.vipPackages,
+            numbers: this.paymentNumbers
+          }).then(() => alert("Pricing & Gateway Numbers Saved!"));
+        },
+
         saveAds() {
-          db.collection("settings").doc("ads").set(this.ads).then(() => alert("Ad Links Saved!"));
+          db.collection("settings").doc("ads").set(this.ads).then(() => alert("Ad Settings Saved!"));
+        },
+
+        saveScripts() {
+          db.collection("settings").doc("scripts").set({ code: this.scriptCode }).then(() => alert("Custom JS Scripts Injected!"));
         }
       }
     }
