@@ -13,18 +13,18 @@
 </head>
 <body class="bg-black text-gray-100 font-sans min-h-screen" x-data="adminApp()" x-init="initAdmin()">
 
-  <!-- Login Modal Section -->
+  <!-- Login Modal Section (Mandatory Auth on reload/leave) -->
   <div x-show="!isLoggedIn" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
     <div class="bg-gray-900 border border-gray-800 p-8 rounded-2xl max-w-sm w-full space-y-5 shadow-2xl">
       <div class="text-center space-y-1">
         <h2 class="text-2xl font-black text-red-600 tracking-wider">ADMIN<span class="text-yellow-400">LOGIN</span></h2>
-        <p class="text-xs text-gray-400">Enter correct admin credentials to proceed</p>
+        <p class="text-xs text-gray-400">Enter Admin Username & Password</p>
       </div>
 
       <form @submit.prevent="handleLogin()" class="space-y-4 text-xs">
         <div>
-          <label class="block mb-1 text-gray-400 font-bold">Admin Email</label>
-          <input type="email" x-model="loginEmail" required placeholder="shgloryone@gmail.com" class="w-full bg-black border border-gray-800 rounded-xl p-3 text-white focus:outline-none focus:border-red-600">
+          <label class="block mb-1 text-gray-400 font-bold">Admin Username</label>
+          <input type="text" x-model="loginUsername" required placeholder="Admin Username" class="w-full bg-black border border-gray-800 rounded-xl p-3 text-white focus:outline-none focus:border-red-600">
         </div>
 
         <div>
@@ -64,6 +64,9 @@
           <button @click="tab = 'menu'" :class="tab === 'menu' ? 'bg-red-600 text-white' : 'text-gray-400 hover:bg-gray-800'" class="w-full text-left p-3 rounded-xl flex items-center gap-2">
             <i class="fa-solid fa-bars"></i> Main Menu Links
           </button>
+          <button @click="tab = 'comments'" :class="tab === 'comments' ? 'bg-red-600 text-white' : 'text-gray-400 hover:bg-gray-800'" class="w-full text-left p-3 rounded-xl flex items-center gap-2">
+            <i class="fa-solid fa-comments"></i> Comment Manager
+          </button>
           <button @click="tab = 'payments'" :class="tab === 'payments' ? 'bg-red-600 text-white' : 'text-gray-400 hover:bg-gray-800'" class="w-full text-left p-3 rounded-xl flex items-center justify-between">
             <span class="flex items-center gap-2"><i class="fa-solid fa-crown text-yellow-400"></i> VIP Approvals</span>
             <span x-show="pendingPayments.length > 0" class="bg-yellow-500 text-black px-1.5 py-0.5 rounded-full text-[10px]" x-text="pendingPayments.length"></span>
@@ -73,6 +76,9 @@
           </button>
           <button @click="tab = 'ads'" :class="tab === 'ads' ? 'bg-red-600 text-white' : 'text-gray-400 hover:bg-gray-800'" class="w-full text-left p-3 rounded-xl flex items-center gap-2">
             <i class="fa-solid fa-rectangle-ad"></i> Ads & Banners
+          </button>
+          <button @click="tab = 'credentials'" :class="tab === 'credentials' ? 'bg-red-600 text-white' : 'text-gray-400 hover:bg-gray-800'" class="w-full text-left p-3 rounded-xl flex items-center gap-2">
+            <i class="fa-solid fa-key"></i> Admin Security
           </button>
           <button @click="tab = 'scripts'" :class="tab === 'scripts' ? 'bg-red-600 text-white' : 'text-gray-400 hover:bg-gray-800'" class="w-full text-left p-3 rounded-xl flex items-center gap-2">
             <i class="fa-solid fa-code"></i> Custom JS Injector
@@ -216,24 +222,52 @@
         </div>
       </div>
 
-      <!-- Tab 6: Payments Approval -->
+      <!-- Tab 6: Full Comment Manager -->
+      <div x-show="tab === 'comments'" class="space-y-4">
+        <h2 class="text-lg font-bold text-gray-200">All Video Comments Control</h2>
+        <div class="max-w-md">
+          <select x-model="selectedVideoForComments" @change="loadAllCommentsForVideo()" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2.5 text-xs text-white">
+            <option value="">Select Video to View Comments</option>
+            <template x-for="p in posts" :key="p.id">
+              <option :value="p.id" x-text="p.title"></option>
+            </template>
+          </select>
+        </div>
+
+        <div class="space-y-2">
+          <template x-for="c in allCommentsList" :key="c.id">
+            <div class="bg-gray-900 p-3 rounded-xl border border-gray-800 flex justify-between items-center text-xs">
+              <div>
+                <div class="font-bold text-red-500" x-text="c.user"></div>
+                <div class="text-gray-200 text-sm mt-0.5" x-text="c.text"></div>
+              </div>
+              <button @click="deleteAdminComment(c.id)" class="bg-red-950 text-red-400 px-3 py-1.5 rounded-lg font-bold"><i class="fa-solid fa-trash"></i> Delete</button>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- Tab 7: VIP Payments Approval / Reject -->
       <div x-show="tab === 'payments'" class="space-y-4">
-        <h2 class="text-lg font-bold text-yellow-400">VIP Order Approvals</h2>
+        <h2 class="text-lg font-bold text-yellow-400">VIP Order Approvals & Verification</h2>
         <div class="space-y-2">
           <template x-for="req in pendingPayments" :key="req.id">
             <div class="bg-gray-900 p-4 rounded-xl border border-gray-800 flex justify-between items-center text-xs">
               <div>
                 <div class="font-bold text-emerald-400 text-sm" x-text="req.username"></div>
                 <div class="text-gray-300">Package: <span x-text="req.package"></span></div>
-                <div class="text-amber-400 font-bold">TrxID: <span x-text="req.trxId"></span></div>
+                <div class="text-amber-400 font-black text-sm">TrxID: <span x-text="req.trxId"></span></div>
               </div>
-              <button @click="approvePayment(req)" class="bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold">Approve Membership</button>
+              <div class="flex items-center gap-2">
+                <button @click="approvePayment(req)" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl font-bold">Accept</button>
+                <button @click="rejectPayment(req.id)" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl font-bold">Reject</button>
+              </div>
             </div>
           </template>
         </div>
       </div>
 
-      <!-- Tab 7: VIP Package Pricing -->
+      <!-- Tab 8: VIP Package Pricing -->
       <div x-show="tab === 'pricing'" class="max-w-md space-y-4">
         <h2 class="text-lg font-bold text-yellow-400">VIP Pricing & Payment Numbers</h2>
         <div class="space-y-3 text-xs">
@@ -254,12 +288,15 @@
         </div>
       </div>
 
-      <!-- Tab 8: SmartLink Ads & Native Ads Manager -->
+      <!-- Tab 9: SmartLink Ads & Native Ads Manager (With Player Top Banner) -->
       <div x-show="tab === 'ads'" class="max-w-md space-y-4">
         <h2 class="text-lg font-bold text-gray-200">Ads Manager</h2>
         <div class="space-y-3 text-xs">
-          <p class="font-bold text-yellow-400">Top Banner Ad HTML (720x90):</p>
-          <textarea x-model="ads.topBanner" placeholder="720x90 Ad Code / Image HTML" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2 text-white h-20"></textarea>
+          <p class="font-bold text-yellow-400">Main Site Top Banner Ad HTML (720x90):</p>
+          <textarea x-model="ads.topBanner" placeholder="720x90 Main Site Ad Code" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2 text-white h-20"></textarea>
+
+          <p class="font-bold text-yellow-400">Video Player Top Banner Ad HTML (720x90):</p>
+          <textarea x-model="ads.playerTopBanner" placeholder="720x90 Player Top Ad Code" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2 text-white h-20"></textarea>
 
           <p class="font-bold text-yellow-400">3-Step Gateway Links:</p>
           <input type="text" x-model="ads.link1" placeholder="Ad Link 1 URL" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2.5 text-white">
@@ -275,7 +312,27 @@
         </div>
       </div>
 
-      <!-- Tab 9: Custom JS Script Injector -->
+      <!-- Tab 10: Admin Security Credentials Update -->
+      <div x-show="tab === 'credentials'" class="max-w-md space-y-4">
+        <h2 class="text-lg font-bold text-red-500">Update Admin Username & Password</h2>
+        <div class="space-y-3 text-xs bg-gray-900 p-4 rounded-xl border border-gray-800">
+          <div>
+            <label class="block mb-1 text-gray-400 font-bold">New Admin Username</label>
+            <input type="text" x-model="newAdminUsername" placeholder="New Admin Username" class="w-full bg-black border border-gray-800 rounded-xl p-2.5 text-white">
+          </div>
+          <div>
+            <label class="block mb-1 text-gray-400 font-bold">Current Password (Required)</label>
+            <input type="password" x-model="currAdminPassword" placeholder="Enter Current Password" class="w-full bg-black border border-gray-800 rounded-xl p-2.5 text-white">
+          </div>
+          <div>
+            <label class="block mb-1 text-gray-400 font-bold">New Password</label>
+            <input type="password" x-model="newAdminPassword" placeholder="Enter New Password" class="w-full bg-black border border-gray-800 rounded-xl p-2.5 text-white">
+          </div>
+          <button @click="updateAdminCredentials()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl">Update Credentials</button>
+        </div>
+      </div>
+
+      <!-- Tab 11: Custom JS Script Injector -->
       <div x-show="tab === 'scripts'" class="max-w-lg space-y-4">
         <h2 class="text-lg font-bold text-gray-200">Custom JavaScript & Script Injector</h2>
         <div class="space-y-3 text-xs">
@@ -303,21 +360,26 @@
 
     function adminApp() {
       return {
-        // Authentication States
         isLoggedIn: false,
-        loginEmail: '',
+        loginUsername: '',
         loginPassword: '',
         errorMessage: '',
         
-        // Admin Master Credentials
-        ADMIN_EMAIL: 'shgloryone@gmail.com',
-        ADMIN_PASS: '66449988.com',
+        // Default Credentials (Stored & Managed in Firestore settings/adminCreds)
+        adminUsername: 'admin',
+        adminPassword: '66449988.com',
+
+        newAdminUsername: '',
+        currAdminPassword: '',
+        newAdminPassword: '',
 
         tab: 'stats',
         posts: [],
         categories: [],
         pendingPayments: [],
         customMenuLinks: [],
+        selectedVideoForComments: '',
+        allCommentsList: [],
         newCat: '',
         newMenuTitle: '', newMenuUrl: '',
         post: { title: '', thumbnail: '', iframeUrl: '', downloadUrl: '', category: '', isPremium: false },
@@ -334,31 +396,42 @@
           { name: '1 Year VIP', price: 999, days: 365 }
         ],
         paymentNumbers: { bkash: '0190942xxxx', nagad: '0190942xxxx', rocket: '0190942xxxx' },
-        ads: { topBanner: '', link1: '', link2: '', link3: '', feedAdTitle: '', feedAdImage: '', feedAdUrl: '' },
+        ads: { topBanner: '', playerTopBanner: '', link1: '', link2: '', link3: '', feedAdTitle: '', feedAdImage: '', feedAdUrl: '' },
 
         initAdmin() {
-          // Check session status
-          if (sessionStorage.getItem('admin_authenticated') === 'true') {
-            this.isLoggedIn = true;
-            this.loadAllData();
-          }
+          // Strict security: Clear active session flag when tab is closed or reloaded
+          window.addEventListener('beforeunload', () => {
+            sessionStorage.removeItem('admin_authenticated');
+          });
+
+          this.loadAdminCreds();
+        },
+
+        loadAdminCreds() {
+          db.collection("settings").doc("adminCreds").get().then(doc => {
+            if (doc.exists) {
+              const data = doc.data();
+              this.adminUsername = data.username || this.adminUsername;
+              this.adminPassword = data.password || this.adminPassword;
+            }
+          });
         },
 
         handleLogin() {
-          if (this.loginEmail.trim().toLowerCase() === this.ADMIN_EMAIL.toLowerCase() && this.loginPassword === this.ADMIN_PASS) {
+          if (this.loginUsername.trim() === this.adminUsername && this.loginPassword === this.adminPassword) {
             this.isLoggedIn = true;
             this.errorMessage = '';
             sessionStorage.setItem('admin_authenticated', 'true');
             this.loadAllData();
           } else {
-            this.errorMessage = 'Invalid Email or Password!';
+            this.errorMessage = 'Invalid Username or Password!';
           }
         },
 
         logout() {
           sessionStorage.removeItem('admin_authenticated');
           this.isLoggedIn = false;
-          this.loginEmail = '';
+          this.loginUsername = '';
           this.loginPassword = '';
         },
 
@@ -491,6 +564,19 @@
           db.collection("customMenu").doc(id).delete();
         },
 
+        loadAllCommentsForVideo() {
+          if(!this.selectedVideoForComments) return this.allCommentsList = [];
+          db.collection("videos").doc(this.selectedVideoForComments).collection("comments").onSnapshot(snap => {
+            this.allCommentsList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          });
+        },
+
+        deleteAdminComment(cId) {
+          if(confirm("Delete comment?")) {
+            db.collection("videos").doc(this.selectedVideoForComments).collection("comments").doc(cId).delete();
+          }
+        },
+
         approvePayment(req) {
           const days = req.days || 30;
           const expiryDate = new Date();
@@ -501,8 +587,16 @@
             premiumUntil: expiryDate 
           }).then(() => {
             db.collection("paymentRequests").doc(req.id).update({ status: "approved" });
-            alert(`User ${req.username} activated as VIP for ${days} days!`);
+            alert(`User ${req.username} approved as VIP for ${days} days!`);
           });
+        },
+
+        rejectPayment(reqId) {
+          if(confirm("Reject this VIP request?")) {
+            db.collection("paymentRequests").doc(reqId).update({ status: "rejected" }).then(() => {
+              alert("Payment request rejected!");
+            });
+          }
         },
 
         savePricingSettings() {
@@ -514,6 +608,23 @@
 
         saveAds() {
           db.collection("settings").doc("ads").set(this.ads).then(() => alert("Ad Settings Saved!"));
+        },
+
+        updateAdminCredentials() {
+          if (this.currAdminPassword !== this.adminPassword) {
+            return alert("Current password incorrect! Credentials not updated.");
+          }
+          const u = this.newAdminUsername.trim() || this.adminUsername;
+          const p = this.newAdminPassword.trim() || this.adminPassword;
+
+          db.collection("settings").doc("adminCreds").set({ username: u, password: p }).then(() => {
+            this.adminUsername = u;
+            this.adminPassword = p;
+            alert("Admin credentials updated successfully!");
+            this.newAdminUsername = '';
+            this.currAdminPassword = '';
+            this.newAdminPassword = '';
+          });
         },
 
         saveScripts() {
