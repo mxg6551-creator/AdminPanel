@@ -13,7 +13,36 @@
 </head>
 <body class="bg-black text-gray-100 font-sans min-h-screen" x-data="adminApp()" x-init="initAdmin()">
 
-  <div class="flex h-screen overflow-hidden">
+  <!-- Login Modal Section -->
+  <div x-show="!isLoggedIn" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="bg-gray-900 border border-gray-800 p-8 rounded-2xl max-w-sm w-full space-y-5 shadow-2xl">
+      <div class="text-center space-y-1">
+        <h2 class="text-2xl font-black text-red-600 tracking-wider">ADMIN<span class="text-yellow-400">LOGIN</span></h2>
+        <p class="text-xs text-gray-400">Enter correct admin credentials to proceed</p>
+      </div>
+
+      <form @submit.prevent="handleLogin()" class="space-y-4 text-xs">
+        <div>
+          <label class="block mb-1 text-gray-400 font-bold">Admin Email</label>
+          <input type="email" x-model="loginEmail" required placeholder="shgloryone@gmail.com" class="w-full bg-black border border-gray-800 rounded-xl p-3 text-white focus:outline-none focus:border-red-600">
+        </div>
+
+        <div>
+          <label class="block mb-1 text-gray-400 font-bold">Admin Password</label>
+          <input type="password" x-model="loginPassword" required placeholder="••••••••" class="w-full bg-black border border-gray-800 rounded-xl p-3 text-white focus:outline-none focus:border-red-600">
+        </div>
+
+        <div x-show="errorMessage" x-text="errorMessage" class="text-red-500 font-bold text-center text-xs bg-red-950/50 p-2 rounded-lg border border-red-800/50"></div>
+
+        <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition duration-200">
+          Access Admin Panel
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Main Admin Workspace Container -->
+  <div x-show="isLoggedIn" x-cloak class="flex h-screen overflow-hidden">
     <!-- Sidebar Navigation -->
     <aside class="w-64 bg-gray-900 border-r border-gray-800 flex flex-col justify-between p-4">
       <div class="space-y-6">
@@ -51,8 +80,13 @@
         </nav>
       </div>
 
-      <div class="text-[10px] text-gray-500 text-center">
-        MMSHUB.XYZ Admin Console
+      <div class="space-y-3">
+        <button @click="logout()" class="w-full bg-gray-800 hover:bg-red-950 hover:text-red-400 text-gray-400 p-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-right-from-bracket"></i> Logout
+        </button>
+        <div class="text-[10px] text-gray-500 text-center">
+          MMSHUB.XYZ Admin Console
+        </div>
       </div>
     </aside>
 
@@ -269,6 +303,16 @@
 
     function adminApp() {
       return {
+        // Authentication States
+        isLoggedIn: false,
+        loginEmail: '',
+        loginPassword: '',
+        errorMessage: '',
+        
+        // Admin Master Credentials
+        ADMIN_EMAIL: 'shgloryone@gmail.com',
+        ADMIN_PASS: '66449988.com',
+
         tab: 'stats',
         posts: [],
         categories: [],
@@ -293,6 +337,32 @@
         ads: { topBanner: '', link1: '', link2: '', link3: '', feedAdTitle: '', feedAdImage: '', feedAdUrl: '' },
 
         initAdmin() {
+          // Check session status
+          if (sessionStorage.getItem('admin_authenticated') === 'true') {
+            this.isLoggedIn = true;
+            this.loadAllData();
+          }
+        },
+
+        handleLogin() {
+          if (this.loginEmail.trim().toLowerCase() === this.ADMIN_EMAIL.toLowerCase() && this.loginPassword === this.ADMIN_PASS) {
+            this.isLoggedIn = true;
+            this.errorMessage = '';
+            sessionStorage.setItem('admin_authenticated', 'true');
+            this.loadAllData();
+          } else {
+            this.errorMessage = 'Invalid Email or Password!';
+          }
+        },
+
+        logout() {
+          sessionStorage.removeItem('admin_authenticated');
+          this.isLoggedIn = false;
+          this.loginEmail = '';
+          this.loginPassword = '';
+        },
+
+        loadAllData() {
           this.loadPosts();
           this.loadCategories();
           this.loadPayments();
